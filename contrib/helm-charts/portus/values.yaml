@@ -210,6 +210,18 @@ registry:
   replicas: 1
   mountPath: "/storage"
 
+  ## optional storage configuration, overwriting the otherwise used filesystem/mountPath
+  ## see https://docs.docker.com/registry/configuration/ for the full list of options
+  # storage:
+  #   delete:
+  #     enabled: true
+  #   s3n
+  #     accesskey: awsaccesskey
+  #     secretkey: awssecretkey
+  #     region: us-west-1
+  #     regionendpoint: http://myobjects.local
+  #     bucket: bucketname
+
   ## persistence configuration.
   ##
   persistence:

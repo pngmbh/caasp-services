@@ -32,11 +32,16 @@ data:
       backoff: 1s
   config: |
     version: 0.1
+    {{- if .Values.registry.storage }}
+    storage:
+{{ toYaml .Values.registry.storage | indent 6 }}
+    {{- else }}
     storage:
       filesystem:
         rootdirectory: {{ .Values.registry.mountPath }}
       delete:
         enabled: true
+    {{- end }}
     http:
       addr: 0.0.0.0:{{ .Values.registry.service.port }}
       debug:

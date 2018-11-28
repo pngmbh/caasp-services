@@ -65,11 +65,12 @@ spec:
                   name: {{ template "registry.fullname" . }}
                   key: REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE
             {{- else }}
-            - name: REGISTRY_AUTH_SILLY_REALM
+            - name: REALM_HOST
               valueFrom:
-                configMapKeyRef:
-                  name: {{ template "registry.fullname" . }}
-                  key: REGISTRY_AUTH_SILLY_REALM
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: REGISTRY_AUTH_SILLY_REALM
+              value: {{ printf "http://$(REALM_HOST):%d/v2/token" (int .Values.nginx.service.port) | quote }}
             - name: REGISTRY_AUTH_SILLY_SERVICE
               valueFrom:
                 configMapKeyRef:

@@ -33,12 +33,13 @@ spec:
             - containerPort: {{ .Values.registry.service.port }}
             - containerPort: {{ .Values.registry.service.debugPort }}
           env:
-            {{- if .Values.portus.tls.enabled }}
-            - name: REGISTRY_AUTH_TOKEN_REALM
+            {{- if or (.Values.portus.tls.enabled) (.Values.portus.tokenauth.enabled) }}
+            - name: REALM_HOST
               valueFrom:
-                configMapKeyRef:
-                  name: {{ template "registry.fullname" . }}
-                  key: REGISTRY_AUTH_TOKEN_REALM
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: REGISTRY_AUTH_TOKEN_REALM
+              value: {{ printf "http://$(REALM_HOST):%d/v2/token" (int .Values.nginx.service.port) | quote }}
             - name: REGISTRY_AUTH_TOKEN_SERVICE
               valueFrom:
                 configMapKeyRef:
@@ -49,6 +50,12 @@ spec:
                 configMapKeyRef:
                   name: {{ template "registry.fullname" . }}
                   key: REGISTRY_AUTH_TOKEN_ISSUER
+            - name: REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ template "registry.fullname" . }}
+                  key: REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE
+            {{- if .Values.portus.tls.enabled }}
             - name: REGISTRY_HTTP_TLS_KEY
               valueFrom:
                 configMapKeyRef:
@@ -59,11 +66,7 @@ spec:
                 configMapKeyRef:
                   name: {{ template "registry.fullname" . }}
                   key: REGISTRY_HTTP_TLS_CERTIFICATE
-            - name: REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ template "registry.fullname" . }}
-                  key: REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE
+            {{- end }}
             {{- else }}
             - name: REALM_HOST
               valueFrom:
@@ -85,7 +88,7 @@ spec:
           resources:
 {{ toYaml .Values.registry.resources | indent 12 }}
           volumeMounts:
-            {{- if .Values.portus.tls.enabled }}
+            {{- if or (.Values.portus.tls.enabled) (.Values.portus.tokenauth.enabled) }}
             - name: certvol
               mountPath: /certificates
             {{- end }}
@@ -95,7 +98,7 @@ spec:
             - name: storage
               mountPath: {{ .Values.registry.mountPath }}
       volumes:
-        {{- if .Values.portus.tls.enabled }}
+        {{- if or (.Values.portus.tls.enabled) (.Values.portus.tokenauth.enabled) }}
         - name: certvol
           secret:
             secretName: {{ template "portus.fullname" . }}

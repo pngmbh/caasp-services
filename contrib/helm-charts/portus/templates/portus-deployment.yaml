@@ -25,7 +25,7 @@ spec:
         - name: "portus"
           image: "{{ .Values.portus.image.repository }}:{{ .Values.portus.image.tag }}"
           imagePullPolicy: {{ .Values.portus.image.pullPolicy }}
-          {{- if eq false .Values.portus.tls.enabled }}
+          {{- if not (.Values.portus.tls.key) }}
           command: ["/bin/bash"]
           args: ["-c", "openssl genrsa -out /secrets/portus.key 3072;/init"]
           {{- end }}
@@ -173,7 +173,7 @@ spec:
             - name: secrets
               mountPath: /secrets
       volumes:
-        {{- if .Values.portus.tls.enabled }}
+        {{- if or (.Values.portus.tls.enabled) (.Values.portus.tokenauth.enabled) }}
         - name: secrets
           secret:
             secretName: {{ template "portus.fullname" . }}
